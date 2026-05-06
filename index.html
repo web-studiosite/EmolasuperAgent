@@ -1,37 +1,180 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-MZ">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sistema Financeiro</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Agente - Carteira Móvel</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Fórmulas de comissão -->
+  <script src="formulas.js"></script>
+  <!-- Cálculo de recargas -->
+  <script src="recargas.js"></script>
+  <!-- Aplicação principal -->
+  <script src="app.js"></script>
 </head>
 <body>
 
-<h1>Painel Financeiro</h1>
+  <!-- ===================== TOAST ===================== -->
+  <div id="toast-container" class="toast-container"></div>
 
-<div class="box">
-  <h2>Adicionar Agente</h2>
-  <input id="agentName" placeholder="Nome do agente" />
-  <button onclick="addAgent()">Adicionar</button>
-</div>
+  <!-- ===================== MODAL: SETUP INICIAL ===================== -->
+  <div id="modal-setup" class="modal-overlay">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <h3>Bem-vindo ao Sistema</h3>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-muted" style="margin-bottom:20px">
+          Configure o seu perfil de Super Agente para começar a gerir a sua carteira móvel.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Nome do Super Agente</label>
+          <input type="text" id="setup-nome" class="form-input" placeholder="Ex: João Machava">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Saldo inicial disponível (MZN)</label>
+          <input type="number" id="setup-saldo" class="form-input" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="finishSetup()">Começar</button>
+      </div>
+    </div>
+  </div>
 
-<div class="box">
-  <h2>Registrar Venda</h2>
-  <select id="agentSelect"></select>
-  <input id="amount" type="number" placeholder="Valor" />
-  <button onclick="addSale()">Registrar</button>
-</div>
+  <!-- ===================== MODAL: SUBAGENTE FORM ===================== -->
+  <div id="modal-subs" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-subs-title">Novo Subagente</h3>
+        <button class="btn-icon" onclick="closeModal('modal-subs')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sub-form-id">
+        <div class="form-group">
+          <label class="form-label">Nome Completo *</label>
+          <input type="text" id="sub-form-nome" class="form-input" placeholder="Nome do subagente">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Número do BI *</label>
+            <input type="text" id="sub-form-bi" class="form-input" placeholder="Ex: 000123456ABC">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone (WhatsApp) *</label>
+            <input type="text" id="sub-form-telefone" class="form-input" placeholder="Ex: 840123456">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Percentual de Comissão (%)</label>
+          <input type="number" id="sub-form-comissao" class="form-input" value="4" min="0" max="100" step="0.1">
+          <p class="form-hint">Este valor é informativo. As comissões são calculadas pelas taxas definidas em formulas.js</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto do BI</label>
+          <div class="file-input-wrapper">
+            <input type="file" id="sub-form-foto" accept="image/*">
+            <div class="icon">&#128247;</div>
+            <p>Clique ou arraste a foto do BI aqui</p>
+          </div>
+          <div id="sub-form-bi-preview" class="hidden" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-subs')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSubagente()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
-<div class="box">
-  <h2>Agentes</h2>
-  <ul id="agentList"></ul>
-</div>
+  <!-- ===================== MODAL: VER BI ===================== -->
+  <div id="modal-bi-view" class="modal-overlay">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <h3>Foto do BI - <span id="bi-view-name"></span></h3>
+        <button class="btn-icon" onclick="closeModal('modal-bi-view')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="text-align:center">
+        <img id="bi-view-img" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">
+      </div>
+    </div>
+  </div>
 
-<div class="box">
-  <h2>Comissões</h2>
-  <ul id="commissionList"></ul>
-</div>
+  <!-- ===================== MODAL: ÁREA DO SUBAGENTE ===================== -->
+  <div id="modal-subagente-view" class="modal-overlay">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>Área do Subagente</h3>
+        <button class="btn-icon" onclick="closeModal('modal-subagente-view')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Selecione o seu número de telefone</label>
+          <select id="sv-subagente" class="form-select" onchange="loadSubagenteView()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
 
-<script src="app.js"></script>
-</body>
-</html>
+        <div id="sv-content" class="hidden">
+          <div class="subagent-profile">
+            <div class="subagent-avatar" id="sv-avatar">SA</div>
+            <div class="subagent-info">
+              <h3 id="sv-name">Nome</h3>
+              <p id="sv-phone">Telefone</p>
+            </div>
+          </div>
+
+          <div class="card-grid card-grid-3" style="margin-bottom:20px">
+            <div class="report-summary-card">
+              <div class="label">Total em Comissões</div>
+              <div class="val text-gold" id="sv-total-com">0,00 MZN</div>
+            </div>
+            <div class="report-summary-card">
+              <div class="label">Total Movimentado</div>
+              <div class="val text-accent" id="sv-total-val">0,00 MZN</div>
+            </div>
+            <div class="report-summary-card">
+              <div class="label">N.º de Operações</div>
+              <div class="val" id="sv-num-ops">0</div>
+            </div>
+          </div>
+
+          <h4 style="margin-bottom:12px;font-size:0.95rem">Histórico Recente</h4>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Comissão</th></tr>
+              </thead>
+              <tbody id="sv-history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Super Agente</h2>
+      <p>Carteira Móvel</p>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard" onclick="navigateTo('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-view="subagentes" onclick="navigateTo('subagentes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Subagentes
+      </button>
+      <button class="nav-item" data-view="operacoes" onclick="navigateTo('operacoes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="
