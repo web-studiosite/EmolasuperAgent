@@ -1,130 +1,37 @@
 <!DOCTYPE html>
 <html lang="pt">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestão de Agentes</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-      nav { background: #333; color: white; padding: 1em; text-align: center; }
-      nav a { color: white; margin: 0 15px; text-decoration: none; }
-      .page { padding: 2em; }
-      .agent-form, .sale-form { max-width: 400px; margin: auto; }
-      input, button { display: block; margin-top: 10px; padding: 10px; width: 100%; }
-      table { width: 100%; border-collapse: collapse; margin-top: 1em; }
-      table, th, td { border: 1px solid #ccc; }
-      th, td { padding: 10px; text-align: center; }
-    </style>
-  </head>
-  <body>
-    <nav>
-      <a href="#agentes">Agentes</a>
-      <a href="#vendas">Vendas</a>
-      <a href="#dashboard">Dashboard</a>
-    </nav>
+<head>
+  <meta charset="UTF-8" />
+  <title>Sistema Financeiro</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-    <div id="agentes" class="page">
-      <h2>Cadastro de Agentes</h2>
-      <form class="agent-form" id="agent-form">
-        <input type="text" id="agent-name" placeholder="Nome do Agente" required />
-        <button type="button" onclick="addAgent()">Adicionar Agente</button>
-      </form>
-      <table id="agents-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-          </tr>
-        </thead>
-        <tbody id="agents-list"></tbody>
-      </table>
-    </div>
+<h1>Painel Financeiro</h1>
 
-    <div id="vendas" class="page">
-      <h2>Registro de Vendas</h2>
-      <form class="sale-form" id="sale-form">
-        <select id="agent-select" required>
-          <option value="">Selecione o Agente</option>
-        </select>
-        <input type="number" id="sale-amount" placeholder="Valor da Venda" required />
-        <button type="button" onclick="addSale()">Registrar Venda</button>
-      </form>
-      <table id="sales-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Agente</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody id="sales-list"></tbody>
-      </table>
-    </div>
+<div class="box">
+  <h2>Adicionar Agente</h2>
+  <input id="agentName" placeholder="Nome do agente" />
+  <button onclick="addAgent()">Adicionar</button>
+</div>
 
-    <div id="dashboard" class="page">
-      <h2>Dashboard de Comissões</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Agente</th>
-            <th>Comissão</th>
-          </tr>
-        </thead>
-        <tbody id="commissions-list"></tbody>
-      </table>
-    </div>
+<div class="box">
+  <h2>Registrar Venda</h2>
+  <select id="agentSelect"></select>
+  <input id="amount" type="number" placeholder="Valor" />
+  <button onclick="addSale()">Registrar</button>
+</div>
 
-    <script>
-      let agents = [];
-      let sales = [];
+<div class="box">
+  <h2>Agentes</h2>
+  <ul id="agentList"></ul>
+</div>
 
-      function addAgent() {
-        const name = document.getElementById('agent-name').value;
-        if (name) {
-          const agent = { id: Date.now(), name };
-          agents.push(agent);
-          renderAgents();
-          document.getElementById('agent-name').value = '';
-          updateAgentSelect();
-        }
-      }
+<div class="box">
+  <h2>Comissões</h2>
+  <ul id="commissionList"></ul>
+</div>
 
-      function renderAgents() {
-        const table = document.getElementById('agents-list');
-        table.innerHTML = '';
-        agents.forEach(agent => {
-          table.innerHTML += `<tr><td>${agent.id}</td><td>${agent.name}</td></tr>`;
-        });
-      }
-
-      function updateAgentSelect() {
-        const select = document.getElementById('agent-select');
-        select.innerHTML = '<option value="">Selecione o Agente</option>';
-        agents.forEach(agent => {
-          select.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
-        });
-      }
-
-      function addSale() {
-        const agentId = document.getElementById('agent-select').value;
-        const amount = parseFloat(document.getElementById('sale-amount').value);
-        if (agentId && amount) {
-          const sale = { id: Date.now(), agentId, amount };
-          sales.push(sale);
-          renderSales();
-        }
-      }
-
-      function renderSales() {
-        const table = document.getElementById('sales-list');
-        table.innerHTML = '';
-        sales.forEach(sale => {
-          const agent = agents.find(a => a.id == sale.agentId);
-          table.innerHTML += `<tr><td>${sale.id}</td><td>${agent ? agent.name : 'Desconhecido'}</td><td>${sale.amount}</td></tr>`;
-        });
-      }
-
-      function calculateCommissions() {
-        const commissionMap = {};
-        sales.forEach(sale => {
-          commissionMap[sale.agentId] = (
+<script src="app.js"></script>
+</body>
+</html>
